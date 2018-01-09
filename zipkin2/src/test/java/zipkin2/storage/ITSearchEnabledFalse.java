@@ -24,12 +24,12 @@ import static zipkin2.TestObjects.CLIENT_SPAN;
 import static zipkin2.storage.ITSpanStore.requestBuilder;
 
 /**
- * Base test for when {@link StorageComponent.Builder#indexingEnabled(boolean) indexingEnabled ==
+ * Base test for when {@link StorageComponent.Builder#searchEnabled(boolean) searchEnabled ==
  * false}.
  *
  * <p>Subtypes should create a connection to a real backend, even if that backend is in-process.
  */
-public abstract class ITIndexingEnabledFalse {
+public abstract class ITSearchEnabledFalse {
 
   /** Should maintain state between multiple calls within a test. */
   protected abstract StorageComponent storage();

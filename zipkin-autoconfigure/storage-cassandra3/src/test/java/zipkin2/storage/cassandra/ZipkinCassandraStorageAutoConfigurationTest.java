@@ -100,4 +100,16 @@ public class ZipkinCassandraStorageAutoConfigurationTest {
 
     assertThat(context.getBean(CassandraStorage.class).strictTraceId()).isFalse();
   }
+
+  @Test
+  public void searchEnabled_canSetToFalse() {
+    context = new AnnotationConfigApplicationContext();
+    addEnvironment(context, "zipkin.storage.type:cassandra3");
+    addEnvironment(context, "zipkin.storage.search-enabled:false");
+    context.register(PropertyPlaceholderAutoConfiguration.class,
+      ZipkinCassandra3StorageAutoConfiguration.class);
+    context.refresh();
+
+    assertThat(context.getBean(CassandraStorage.class).searchEnabled()).isFalse();
+  }
 }

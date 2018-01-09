@@ -60,7 +60,7 @@ public abstract class ElasticsearchStorage extends zipkin2.storage.StorageCompon
       .hosts(Collections.singletonList("http://localhost:9200"))
       .maxRequests(64)
       .strictTraceId(true)
-      .indexingEnabled(true)
+      .searchEnabled(true)
       .index("zipkin")
       .dateSeparator('-')
       .indexShards(5)
@@ -178,7 +178,7 @@ public abstract class ElasticsearchStorage extends zipkin2.storage.StorageCompon
 
     @Override public abstract Builder strictTraceId(boolean strictTraceId);
 
-    @Override public abstract Builder indexingEnabled(boolean indexingEnabled);
+    @Override public abstract Builder searchEnabled(boolean searchEnabled);
 
     @Override public abstract ElasticsearchStorage build();
 
@@ -202,7 +202,7 @@ public abstract class ElasticsearchStorage extends zipkin2.storage.StorageCompon
 
   public abstract boolean strictTraceId();
 
-  abstract boolean indexingEnabled();
+  abstract boolean searchEnabled();
 
   abstract int indexShards();
 

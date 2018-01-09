@@ -37,7 +37,7 @@ import static zipkin2.storage.cassandra.Schema.TABLE_TRACE_BY_SERVICE_SPAN;
 class CassandraSpanStore implements SpanStore { // not final for testing
   private final int maxTraceCols;
   private final int indexFetchMultiplier;
-  private final boolean strictTraceId, indexingEnabled;
+  private final boolean strictTraceId, searchEnabled;
   private final SelectFromSpan.Factory spans;
   private final SelectDependencies.Factory dependencies;
   private final SelectSpanNames.Factory spanNames;
@@ -51,7 +51,7 @@ class CassandraSpanStore implements SpanStore { // not final for testing
     maxTraceCols = storage.maxTraceCols();
     indexFetchMultiplier = storage.indexFetchMultiplier();
     strictTraceId = storage.strictTraceId();
-    indexingEnabled = storage.indexingEnabled();
+    searchEnabled = storage.searchEnabled();
     KeyspaceMetadata md = Schema.getKeyspaceMetadata(session);
     indexTtl = md.getTable(TABLE_TRACE_BY_SERVICE_SPAN).getOptions().getDefaultTimeToLive();
 
@@ -76,7 +76,7 @@ class CassandraSpanStore implements SpanStore { // not final for testing
    */
   @Override
   public Call<List<List<Span>>> getTraces(QueryRequest request) {
-    if (!indexingEnabled) return Call.emptyList();
+    if (!searchEnabled) return Call.emptyList();
 
     return strictTraceId ? doGetTraces(request) :
       doGetTraces(request).map(new FilterTraces(request));
@@ -90,7 +90,7 @@ class CassandraSpanStore implements SpanStore { // not final for testing
     List<Call<Map<String, Long>>> callsToIntersect = new ArrayList<>();
 
     List<String> annotationKeys =
-      indexingEnabled ? CassandraUtil.annotationKeys(request) : Collections.emptyList();
+      searchEnabled ? CassandraUtil.annotationKeys(request) : Collections.emptyList();
     for (String annotationKey : annotationKeys) {
       callsToIntersect.add(spanTable.newCall(
         request.serviceName(),
@@ -179,12 +179,12 @@ class CassandraSpanStore implements SpanStore { // not final for testing
   }
 
   @Override public Call<List<String>> getServiceNames() {
-    if (!indexingEnabled) return Call.emptyList();
+    if (!searchEnabled) return Call.emptyList();
     return serviceNames.clone();
   }
 
   @Override public Call<List<String>> getSpanNames(String serviceName) {
-    if (!indexingEnabled) return Call.emptyList();
+    if (!searchEnabled) return Call.emptyList();
     return spanNames.create(serviceName);
   }
 

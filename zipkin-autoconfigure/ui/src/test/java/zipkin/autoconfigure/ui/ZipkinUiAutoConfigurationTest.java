@@ -76,6 +76,14 @@ public class ZipkinUiAutoConfigurationTest {
     context = createContextWithOverridenProperty("zipkin.ui.enabled:false");
 
     context.getBean(ZipkinUiProperties.class);
+
+  }
+
+  @Test
+  public void canOverridesProperty_searchEnabled() {
+    context = createContextWithOverridenProperty("zipkin.ui.search-enabled:false");
+
+    assertThat(context.getBean(ZipkinUiProperties.class).isSearchEnabled()).isFalse();
   }
 
   @Test

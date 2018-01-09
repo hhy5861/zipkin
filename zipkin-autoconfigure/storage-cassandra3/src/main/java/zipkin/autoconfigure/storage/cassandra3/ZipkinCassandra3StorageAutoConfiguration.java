@@ -45,8 +45,11 @@ public class ZipkinCassandra3StorageAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
   V2StorageComponent storage(ZipkinCassandra3StorageProperties properties,
-    @Value("${zipkin.storage.strict-trace-id:true}") boolean strictTraceId) {
-    CassandraStorage.Builder builder = properties.toBuilder().strictTraceId(strictTraceId);
+    @Value("${zipkin.storage.strict-trace-id:true}") boolean strictTraceId,
+    @Value("${zipkin.storage.search-enabled:true}") boolean searchEnabled) {
+    CassandraStorage.Builder builder = properties.toBuilder()
+      .strictTraceId(strictTraceId)
+      .searchEnabled(searchEnabled);
     CassandraStorage result = tracingSessionFactory == null
       ? builder.build()
       : builder.sessionFactory(tracingSessionFactory).build();

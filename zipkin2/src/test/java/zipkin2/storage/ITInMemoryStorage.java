@@ -32,8 +32,8 @@ public class ITInMemoryStorage {
     }
   }
 
-  public static class ITIndexingEnabledFalse extends zipkin2.storage.ITIndexingEnabledFalse {
-    InMemoryStorage storage = InMemoryStorage.newBuilder().indexingEnabled(false).build();
+  public static class ITSearchEnabledFalse extends zipkin2.storage.ITSearchEnabledFalse {
+    InMemoryStorage storage = InMemoryStorage.newBuilder().searchEnabled(false).build();
 
     @Override protected InMemoryStorage storage() {
       return storage;

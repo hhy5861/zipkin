@@ -24,6 +24,7 @@ public class ZipkinUiProperties {
   private int defaultLookback = (int) TimeUnit.DAYS.toMillis(7);
   private String instrumented = ".*";
   private String logsUrl = null;
+  private boolean searchEnabled = true;
   private Dependency dependency = new Dependency();
 
   public int getDefaultLookback() {
@@ -66,6 +67,14 @@ public class ZipkinUiProperties {
     if (!StringUtils.isEmpty(logsUrl)) {
       this.logsUrl = logsUrl;
     }
+  }
+
+  public boolean isSearchEnabled() {
+    return searchEnabled;
+  }
+
+  public void setSearchEnabled(boolean searchEnabled) {
+    this.searchEnabled = searchEnabled;
   }
 
   public Dependency getDependency() {

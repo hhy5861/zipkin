@@ -37,7 +37,7 @@ class CassandraSpanConsumer implements SpanConsumer { // not final for testing
     = Long.getLong("zipkin2.storage.cassandra.internal.writtenNamesTtl", 60 * 60 * 1000);
 
   private final Session session;
-  private final boolean strictTraceId, indexingEnabled;
+  private final boolean strictTraceId, searchEnabled;
   private final InsertSpan.Factory insertSpan;
   @Nullable final InsertTraceByServiceSpan.Factory insertTraceByServiceSpan;
   @Nullable private final InsertServiceSpan.Factory insertServiceSpanName;
@@ -45,13 +45,13 @@ class CassandraSpanConsumer implements SpanConsumer { // not final for testing
   CassandraSpanConsumer(CassandraStorage storage) {
     session = storage.session();
     strictTraceId = storage.strictTraceId();
-    indexingEnabled = storage.indexingEnabled();
+    searchEnabled = storage.searchEnabled();
 
     // warns when schema problems exist
     Schema.readMetadata(session);
 
-    insertSpan = new InsertSpan.Factory(session, strictTraceId, indexingEnabled);
-    if (indexingEnabled) {
+    insertSpan = new InsertSpan.Factory(session, strictTraceId, searchEnabled);
+    if (searchEnabled) {
       insertTraceByServiceSpan = new InsertTraceByServiceSpan.Factory(session, strictTraceId);
       insertServiceSpanName = new InsertServiceSpan.Factory(session, WRITTEN_NAMES_TTL);
     } else {
@@ -84,7 +84,7 @@ class CassandraSpanConsumer implements SpanConsumer { // not final for testing
 
       spans.add(insertSpan.newInput(s, ts_uuid));
 
-      if (!indexingEnabled) continue;
+      if (!searchEnabled) continue;
 
       // Empty values allow for api queries with blank service or span name
       String service = s.localServiceName() != null ? s.localServiceName() : "";
@@ -115,7 +115,7 @@ class CassandraSpanConsumer implements SpanConsumer { // not final for testing
     for (InsertSpan.Input span : spans) {
       calls.add(insertSpan.create(span));
     }
-    if (indexingEnabled) {
+    if (searchEnabled) {
       for (InsertServiceSpan.Input serviceSpan : serviceSpans) {
         calls.add(insertServiceSpanName.create(serviceSpan));
       }

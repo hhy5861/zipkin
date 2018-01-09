@@ -33,7 +33,7 @@ public class ITCassandraStorage {
     return new CassandraStorageRule("openzipkin/zipkin-cassandra:2.4.1", "test_cassandra3");
   }
 
-  public static class ITIndexingEnabledFalse extends zipkin2.storage.ITIndexingEnabledFalse {
+  public static class ITSearchEnabledFalse extends zipkin2.storage.ITSearchEnabledFalse {
     @ClassRule public static CassandraStorageRule backend = classRule();
     @Rule public TestName testName = new TestName();
 
@@ -41,7 +41,7 @@ public class ITCassandraStorage {
 
     @Before public void connect() {
       storage = backend.computeStorageBuilder().keyspace(keyspace(testName))
-        .indexingEnabled(false).build();
+        .searchEnabled(false).build();
     }
 
     @Override protected StorageComponent storage() {

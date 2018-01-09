@@ -83,7 +83,7 @@ public abstract class StorageComponent extends Component {
      * <p>Refer to implementation docs for the impact of this parameter. Operations that use indexes
      * should return empty as opposed to throwing an exception.
      */
-    public abstract Builder indexingEnabled(boolean indexingEnabled);
+    public abstract Builder searchEnabled(boolean searchEnabled);
 
     public abstract StorageComponent build();
   }

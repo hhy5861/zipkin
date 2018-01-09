@@ -72,9 +72,9 @@ final class InsertSpan extends ResultSetFutureCall {
   static class Factory {
     final Session session;
     final PreparedStatement preparedStatement;
-    final boolean strictTraceId, indexingEnabled;
+    final boolean strictTraceId, searchEnabled;
 
-    Factory(Session session, boolean strictTraceId, boolean indexingEnabled) {
+    Factory(Session session, boolean strictTraceId, boolean searchEnabled) {
       this.session = session;
       Insert insertQuery = QueryBuilder.insertInto(TABLE_SPAN)
         .value("trace_id", QueryBuilder.bindMarker("trace_id"))
@@ -93,14 +93,14 @@ final class InsertSpan extends ResultSetFutureCall {
         .value("shared", QueryBuilder.bindMarker("shared"))
         .value("debug", QueryBuilder.bindMarker("debug"));
 
-      if (indexingEnabled) {
+      if (searchEnabled) {
         insertQuery.value("l_service", QueryBuilder.bindMarker("l_service"));
         insertQuery.value("annotation_query", QueryBuilder.bindMarker("annotation_query"));
       }
 
       this.preparedStatement = session.prepare(insertQuery);
       this.strictTraceId = strictTraceId;
-      this.indexingEnabled = indexingEnabled;
+      this.searchEnabled = searchEnabled;
     }
 
     Input newInput(zipkin2.Span span, UUID ts_uuid) {
@@ -113,7 +113,7 @@ final class InsertSpan extends ResultSetFutureCall {
       } else {
         annotations = Collections.emptyList();
       }
-      String annotation_query = indexingEnabled ? CassandraUtil.annotationQuery(span): null;
+      String annotation_query = searchEnabled ? CassandraUtil.annotationQuery(span): null;
       return new AutoValue_InsertSpan_Input(
         ts_uuid,
         traceIdHigh ? span.traceId().substring(0, 16) : null,
@@ -191,7 +191,7 @@ final class InsertSpan extends ResultSetFutureCall {
     if (input.shared()) bound.setBool("shared", true);
     if (input.debug()) bound.setBool("debug", true);
 
-    if (factory.indexingEnabled) {
+    if (factory.searchEnabled) {
       if (null != input.l_ep()) bound.setString("l_service", input.l_ep().getService());
       if (null != input.annotation_query()) {
         bound.setString("annotation_query", input.annotation_query());
