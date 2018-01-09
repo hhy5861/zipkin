@@ -73,6 +73,18 @@ public abstract class StorageComponent extends Component {
      */
     public abstract Builder strictTraceId(boolean strictTraceId);
 
+    /**
+     * False is an attempt to disable indexing, leaving only {@link SpanStore#getTrace(String)}
+     * supported. For example, query requests will be disabled.
+     *
+     * The use case is typically to support 100% sampled data, or when traces are searched using
+     * alternative means such as a logging index.
+     *
+     * <p>Refer to implementation docs for the impact of this parameter. Operations that use indexes
+     * should return empty as opposed to throwing an exception.
+     */
+    public abstract Builder indexingEnabled(boolean indexingEnabled);
+
     public abstract StorageComponent build();
   }
 }

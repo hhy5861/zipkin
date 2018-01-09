@@ -21,6 +21,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.junit.rules.TestName;
 import zipkin.DependencyLink;
 import zipkin2.storage.SpanConsumer;
 
@@ -72,6 +73,11 @@ public class InternalForTests {
       }
       break;
     }
+  }
+
+  public static String keyspace(TestName testName) {
+    String result = testName.getMethodName().toLowerCase();
+    return result.length() <= 48 ? result : result.substring(result.length() - 48);
   }
 
   public static void dropKeyspace(Session session, String keyspace) {

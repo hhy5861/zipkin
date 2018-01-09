@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package zipkin2.storage.cassandra.integration;
+package zipkin2.storage.cassandra.integrationV1;
 
 import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.Session;

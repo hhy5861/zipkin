@@ -123,6 +123,11 @@ public final class ElasticsearchHttpStorage extends StorageComponent
       return this;
     }
 
+    @Override public StorageComponent.Builder indexingEnabled(boolean indexingEnabled) {
+      delegate.indexingEnabled(indexingEnabled);
+      return this;
+    }
+
     @Override public final ElasticsearchHttpStorage build() {
       return new ElasticsearchHttpStorage(delegate.build(), legacyReadsEnabled);
     }

@@ -56,9 +56,9 @@ public final class TestObjects {
     .kind(Span.Kind.CLIENT)
     .localEndpoint(FRONTEND)
     .remoteEndpoint(BACKEND)
-    .timestamp(1472470996199000L)
-    .duration(207000L)
-    .addAnnotation(1472470996238000L, "foo")
+    .timestamp((TODAY - 207) * 1000L)
+    .duration(207 * 1000L)
+    .addAnnotation((TODAY - 100) * 1000L, "foo")
     .putTag("http.path", "/api")
     .putTag("clnt/finagle.version", "6.45.0")
     .build();

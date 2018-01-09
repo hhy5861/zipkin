@@ -51,6 +51,7 @@ public abstract class CassandraStorage extends StorageComponent {
   public static Builder newBuilder() {
     return new AutoValue_CassandraStorage.Builder()
       .strictTraceId(true)
+      .indexingEnabled(true)
       .keyspace(Schema.DEFAULT_KEYSPACE)
       .contactPoints("localhost")
       // Zipkin collectors can create out a lot of async requests in bursts
@@ -66,6 +67,9 @@ public abstract class CassandraStorage extends StorageComponent {
   public static abstract class Builder extends StorageComponent.Builder {
     /** {@inheritDoc} */
     @Override public abstract Builder strictTraceId(boolean strictTraceId);
+
+    /** {@inheritDoc} */
+    @Override public abstract Builder indexingEnabled(boolean indexingEnabled);
 
     /** Override to control how sessions are created. */
     public abstract Builder sessionFactory(SessionFactory sessionFactory);
@@ -146,6 +150,7 @@ public abstract class CassandraStorage extends StorageComponent {
   abstract String keyspace();
   abstract int indexFetchMultiplier();
   abstract boolean strictTraceId();
+  abstract boolean indexingEnabled();
   abstract SessionFactory sessionFactory();
 
   /** session and close are typically called from different threads */
