@@ -27,7 +27,7 @@ abstract class CassandraEnsureSchemaTest {
   abstract protected Session session();
 
   @Test public void installsKeyspaceWhenMissing() {
-    InternalForTests.ensureExists(keyspace(), session());
+    InternalForTests.ensureExists(keyspace(), false, session());
 
     KeyspaceMetadata metadata = session().getCluster().getMetadata().getKeyspace(keyspace());
     assertThat(metadata).isNotNull();
@@ -37,9 +37,19 @@ abstract class CassandraEnsureSchemaTest {
     session().execute("CREATE KEYSPACE " + keyspace()
       + " WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};");
 
-    InternalForTests.ensureExists(keyspace(), session());
+    InternalForTests.ensureExists(keyspace(), false, session());
 
     KeyspaceMetadata metadata = session().getCluster().getMetadata().getKeyspace(keyspace());
-    assertThat(metadata).isNotNull();
+    assertThat(metadata.getTable("span")).isNotNull();
+  }
+
+  @Test public void installsIndexesWhenMissing() {
+    session().execute("CREATE KEYSPACE " + keyspace()
+      + " WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};");
+
+    InternalForTests.ensureExists(keyspace(), true, session());
+
+    KeyspaceMetadata metadata = session().getCluster().getMetadata().getKeyspace(keyspace());
+    assertThat(metadata.getTable("trace_by_service_span")).isNotNull();
   }
 }

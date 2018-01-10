@@ -55,8 +55,8 @@ public class InternalForTests {
     return storage.toBuilder().strictTraceId(false).build().spanConsumer();
   }
 
-  public static void ensureExists(String keyspace, Session session) {
-    Schema.ensureExists(keyspace, session);
+  public static void ensureExists(String keyspace, boolean searchEnabled, Session session) {
+    Schema.ensureExists(keyspace, searchEnabled, session);
   }
 
   public static void blockWhileInFlight(CassandraStorage storage) {

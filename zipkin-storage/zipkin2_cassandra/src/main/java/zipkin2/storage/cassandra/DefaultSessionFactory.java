@@ -57,7 +57,7 @@ final class DefaultSessionFactory implements CassandraStorage.SessionFactory {
       Session session;
       if (cassandra.ensureSchema()) {
         session = closer.register(cluster.connect());
-        Schema.ensureExists(cassandra.keyspace(), session);
+        Schema.ensureExists(cassandra.keyspace(), cassandra.searchEnabled(), session);
         session.execute("USE " + cassandra.keyspace());
       } else {
         session = cluster.connect(cassandra.keyspace());
@@ -76,7 +76,7 @@ final class DefaultSessionFactory implements CassandraStorage.SessionFactory {
   }
 
   private static void initializeUDTs(Session session) {
-    Schema.ensureExists(DEFAULT_KEYSPACE + "_udts", session);
+    Schema.ensureExists(DEFAULT_KEYSPACE + "_udts", false, session);
     MappingManager mapping = new MappingManager(session);
 
     // The UDTs are hardcoded against the zipkin keyspace.
