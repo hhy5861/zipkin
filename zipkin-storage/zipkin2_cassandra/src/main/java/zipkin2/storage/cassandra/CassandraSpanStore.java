@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 The OpenZipkin Authors
+ * Copyright 2015-2018 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -52,15 +52,25 @@ class CassandraSpanStore implements SpanStore { // not final for testing
     indexFetchMultiplier = storage.indexFetchMultiplier();
     strictTraceId = storage.strictTraceId();
     searchEnabled = storage.searchEnabled();
-    KeyspaceMetadata md = Schema.getKeyspaceMetadata(session);
-    indexTtl = md.getTable(TABLE_TRACE_BY_SERVICE_SPAN).getOptions().getDefaultTimeToLive();
 
     spans = new SelectFromSpan.Factory(session, strictTraceId, maxTraceCols);
     dependencies = new SelectDependencies.Factory(session);
-    spanNames = new SelectSpanNames.Factory(session);
-    serviceNames = new SelectServiceNames.Factory(session).create();
-    spanTable = new SelectTraceIdsFromSpan.Factory(session);
-    traceIdsFromServiceSpan = new SelectTraceIdsFromServiceSpan.Factory(session);
+
+    if (searchEnabled) {
+      KeyspaceMetadata md = Schema.getKeyspaceMetadata(session);
+      indexTtl = md.getTable(TABLE_TRACE_BY_SERVICE_SPAN).getOptions().getDefaultTimeToLive();
+
+      spanNames = new SelectSpanNames.Factory(session);
+      serviceNames = new SelectServiceNames.Factory(session).create();
+      spanTable = new SelectTraceIdsFromSpan.Factory(session);
+      traceIdsFromServiceSpan = new SelectTraceIdsFromServiceSpan.Factory(session);
+    } else {
+      indexTtl = 0;
+      spanNames = null;
+      serviceNames = null;
+      spanTable = null;
+      traceIdsFromServiceSpan = null;
+    }
   }
 
   /**

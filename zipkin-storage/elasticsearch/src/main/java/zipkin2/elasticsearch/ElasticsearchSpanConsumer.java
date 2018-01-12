@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 The OpenZipkin Authors
+ * Copyright 2015-2018 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -32,15 +32,19 @@ import zipkin2.elasticsearch.internal.client.HttpCall;
 import zipkin2.internal.Nullable;
 import zipkin2.storage.SpanConsumer;
 
+import static zipkin2.elasticsearch.ElasticsearchSpanStore.SPAN;
+
 class ElasticsearchSpanConsumer implements SpanConsumer { // not final for testing
   static final Logger LOG = Logger.getLogger(ElasticsearchSpanConsumer.class.getName());
 
   final ElasticsearchStorage es;
   final IndexNameFormatter indexNameFormatter;
+  final boolean searchEnabled;
 
   ElasticsearchSpanConsumer(ElasticsearchStorage es) {
     this.es = es;
     this.indexNameFormatter = es.indexNameFormatter();
+    this.searchEnabled = es.searchEnabled();
   }
 
   @Override public Call<Void> accept(List<Span> spans) {
@@ -72,16 +76,20 @@ class ElasticsearchSpanConsumer implements SpanConsumer { // not final for testi
   static final class BulkSpanIndexer {
     final HttpBulkIndexer indexer;
     final IndexNameFormatter indexNameFormatter;
+    final boolean searchEnabled;
 
     BulkSpanIndexer(ElasticsearchStorage es) {
       this.indexer = new HttpBulkIndexer("index-span", es);
       this.indexNameFormatter = es.indexNameFormatter();
+      this.searchEnabled = es.searchEnabled();
     }
 
     void add(long indexTimestamp, Span span, @Nullable Long timestampMillis) {
-      String index = indexNameFormatter.formatTypeAndTimestamp(ElasticsearchSpanStore.SPAN, indexTimestamp);
-      byte[] document = prefixWithTimestampMillisAndQuery(span, timestampMillis);
-      indexer.add(index, ElasticsearchSpanStore.SPAN, document, null /* Allow ES to choose an ID */);
+      String index = indexNameFormatter.formatTypeAndTimestamp(SPAN, indexTimestamp);
+      byte[] document = searchEnabled
+        ? prefixWithTimestampMillisAndQuery(span, timestampMillis)
+        : SpanBytesEncoder.JSON_V2.encode(span);
+      indexer.add(index, SPAN, document, null /* Allow ES to choose an ID */);
     }
 
     HttpCall<Void> newCall() {
