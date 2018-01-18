@@ -75,9 +75,9 @@ final class ElasticsearchSpanStore implements SpanStore {
 
     for (Map.Entry<String, String> kv : request.annotationQuery().entrySet()) {
       if (kv.getValue().isEmpty()) {
-        filters.addTerm("_q", kv.getKey());
+        filters.addTerm("_all", kv.getKey());
       } else {
-        filters.addTerm("_q", kv.getKey() + "=" + kv.getValue());
+        filters.addTerm("_all", kv.getKey() + "=" + kv.getValue());
       }
     }
 

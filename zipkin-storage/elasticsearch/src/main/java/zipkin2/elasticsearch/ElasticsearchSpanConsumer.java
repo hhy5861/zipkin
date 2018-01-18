@@ -118,7 +118,7 @@ class ElasticsearchSpanConsumer implements SpanConsumer { // not final for testi
           writer.value(a.value());
         }
         for (Map.Entry<String, String> tag : span.tags().entrySet()) {
-          if (tag.getKey().length() + tag.getValue().length() + 1 > 255) continue;
+          if (tag.getKey().length() + tag.getValue().length() + 1 > 1000) continue;
           writer.value(tag.getKey()); // search is possible by key alone
           writer.value(tag.getKey() + "=" + tag.getValue());
         }

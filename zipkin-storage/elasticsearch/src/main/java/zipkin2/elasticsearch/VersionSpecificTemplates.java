@@ -77,7 +77,7 @@ final class VersionSpecificTemplates {
     + "          \"strings\": {\n"
     + "            \"mapping\": {\n"
     + "              KEYWORD,\n"
-    + "              \"ignore_above\": 256\n"
+    + "              \"ignore_above\": 1000\n"
     + "            },\n"
     + "            \"match_mapping_type\": \"string\",\n"
     + "            \"match\": \"*\"\n"
