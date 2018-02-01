@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 The OpenZipkin Authors
+ * Copyright 2015-2018 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -22,10 +22,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import zipkin2.Annotation;
 import zipkin2.Call;
 import zipkin2.Span;
+import zipkin2.internal.Nullable;
 import zipkin2.storage.SpanConsumer;
 import zipkin2.storage.cassandra.internal.call.AggregateCall;
 
@@ -36,21 +36,27 @@ class CassandraSpanConsumer implements SpanConsumer { // not final for testing
     = Long.getLong("zipkin2.storage.cassandra.internal.writtenNamesTtl", 60 * 60 * 1000);
 
   private final Session session;
-  private final boolean strictTraceId;
+  private final boolean strictTraceId, searchEnabled;
   private final InsertSpan.Factory insertSpan;
-  private final InsertTraceByServiceSpan.Factory insertTraceByServiceSpan;
-  private final InsertServiceSpan.Factory insertServiceSpanName;
+  @Nullable final InsertTraceByServiceSpan.Factory insertTraceByServiceSpan;
+  @Nullable private final InsertServiceSpan.Factory insertServiceSpanName;
 
   CassandraSpanConsumer(CassandraStorage storage) {
     session = storage.session();
     strictTraceId = storage.strictTraceId();
+    searchEnabled = storage.searchEnabled();
 
     // warns when schema problems exist
     Schema.readMetadata(session);
 
-    insertSpan = new InsertSpan.Factory(session, strictTraceId);
-    insertTraceByServiceSpan = new InsertTraceByServiceSpan.Factory(session, strictTraceId);
-    insertServiceSpanName = new InsertServiceSpan.Factory(session, WRITTEN_NAMES_TTL);
+    insertSpan = new InsertSpan.Factory(session, strictTraceId, searchEnabled);
+    if (searchEnabled) {
+      insertTraceByServiceSpan = new InsertTraceByServiceSpan.Factory(session, strictTraceId);
+      insertServiceSpanName = new InsertServiceSpan.Factory(session, WRITTEN_NAMES_TTL);
+    } else {
+      insertTraceByServiceSpan = null;
+      insertServiceSpanName = null;
+    }
   }
 
   /**
@@ -67,7 +73,8 @@ class CassandraSpanConsumer implements SpanConsumer { // not final for testing
 
     for (Span s : input) {
       // indexing occurs by timestamp, so derive one if not present.
-      long ts_micro = s.timestamp() != null ? s.timestamp() : guessTimestamp(s);
+      long ts_micro = s.timestampAsLong();
+      if (ts_micro == 0L) ts_micro = guessTimestamp(s);
 
       // fallback to current time on the ts_uuid for span data, so we know when it was inserted
       UUID ts_uuid = new UUID(
@@ -76,6 +83,8 @@ class CassandraSpanConsumer implements SpanConsumer { // not final for testing
         UUIDs.random().getLeastSignificantBits());
 
       spans.add(insertSpan.newInput(s, ts_uuid));
+
+      if (!searchEnabled) continue;
 
       // Empty values allow for api queries with blank service or span name
       String service = s.localServiceName() != null ? s.localServiceName() : "";
@@ -93,7 +102,7 @@ class CassandraSpanConsumer implements SpanConsumer { // not final for testing
 
       if (ts_micro == 0L) continue; // search is only valid with a timestamp, don't index w/o it!
       int bucket = durationIndexBucket(ts_micro); // duration index is milliseconds not microseconds
-      Long duration = null != s.duration() ? TimeUnit.MICROSECONDS.toMillis(s.duration()) : null;
+      long duration = s.durationAsLong() / 1000L;
       traceByServiceSpans.add(
         insertTraceByServiceSpan.newInput(service, span, bucket, ts_uuid, s.traceId(), duration)
       );
@@ -106,17 +115,19 @@ class CassandraSpanConsumer implements SpanConsumer { // not final for testing
     for (InsertSpan.Input span : spans) {
       calls.add(insertSpan.create(span));
     }
-    for (InsertServiceSpan.Input serviceSpan : serviceSpans) {
-      calls.add(insertServiceSpanName.create(serviceSpan));
-    }
-    for (InsertTraceByServiceSpan.Input serviceSpan : traceByServiceSpans) {
-      calls.add(insertTraceByServiceSpan.create(serviceSpan));
+    if (searchEnabled) {
+      for (InsertServiceSpan.Input serviceSpan : serviceSpans) {
+        calls.add(insertServiceSpanName.create(serviceSpan));
+      }
+      for (InsertTraceByServiceSpan.Input serviceSpan : traceByServiceSpans) {
+        calls.add(insertTraceByServiceSpan.create(serviceSpan));
+      }
     }
     return new StoreSpansCall(calls);
   }
 
   private static long guessTimestamp(Span span) {
-    Preconditions.checkState(null == span.timestamp(),
+    Preconditions.checkState(0L == span.timestampAsLong(),
       "method only for when span has no timestamp");
     for (Annotation annotation : span.annotations()) {
       if (0L < annotation.timestamp()) {
